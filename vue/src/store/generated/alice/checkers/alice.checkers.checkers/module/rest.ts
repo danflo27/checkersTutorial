@@ -9,6 +9,10 @@
  * ---------------------------------------------------------------
  */
 
+export interface CheckersMsgCreateGameResponse {
+  gameIndex?: string;
+}
+
 export type CheckersMsgCreatePostResponse = object;
 
 /**
