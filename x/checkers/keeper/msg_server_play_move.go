@@ -18,6 +18,10 @@ func (k msgServer) PlayMove(goCtx context.Context, msg *types.MsgPlayMove) (*typ
 	if !found {
 		return nil, sdkerrors.Wrapf(types.ErrGameNotFound, "%s", msg.GameIndex)
 	}
+	// check that game has not finsihed yet
+	if storedGame.Winner != rules.PieceStrings[rules.NO_PLAYER] {
+		return nil, types.ErrGameFinished
+	}
 
 	//check if player is legit
 	isBlack := storedGame.Black == msg.Creator
@@ -60,7 +64,15 @@ func (k msgServer) PlayMove(goCtx context.Context, msg *types.MsgPlayMove) (*typ
 	}
 
 	//prepare updated board to be stored
-	storedGame.Board = game.String()
+	//update winner field and board deending on whether game is finsihed or not
+	storedGame.Winner = rules.PieceStrings[game.Winner()]
+
+	lastBoard := game.String()
+	if storedGame.Winner == rules.PieceStrings[rules.NO_PLAYER] {
+		storedGame.Board = lastBoard
+	} else {
+		storedGame.Board = ""
+	}
 	storedGame.Turn = rules.PieceStrings[game.Turn]
 	k.Keeper.SetStoredGame(ctx, storedGame)
 
@@ -72,6 +84,7 @@ func (k msgServer) PlayMove(goCtx context.Context, msg *types.MsgPlayMove) (*typ
 			sdk.NewAttribute(types.MovePlayedEventCapturedX, strconv.FormatInt(int64(captured.X), 10)),
 			sdk.NewAttribute(types.MovePlayedEventCapturedY, strconv.FormatInt(int64(captured.Y), 10)),
 			sdk.NewAttribute(types.MovePlayedEventWinner, rules.PieceStrings[game.Winner()]),
+			sdk.NewAttribute(types.MovePlayedEventBoard, lastBoard),
 		),
 	)
 
