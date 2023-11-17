@@ -38,6 +38,17 @@ func (k msgServer) CreateGame(goCtx context.Context, msg *types.MsgCreateGame) (
 	// set stage for next game
 	systemInfo.NextId++
 	k.Keeper.SetSystemInfo(ctx, systemInfo)
+
+	//emit event for creating a game
+	ctx.EventManager().EmitEvent(
+		sdk.NewEvent(types.GameCreatedEventType,
+			sdk.NewAttribute(types.GameCreatedEventCreator, msg.Creator),
+			sdk.NewAttribute(types.GameCreatedEventGameIndex, newIndex),
+			sdk.NewAttribute(types.GameCreatedEventBlack, msg.Black),
+			sdk.NewAttribute(types.GameCreatedEventRed, msg.Red),
+		),
+	)
+
 	// return new ID for reference
 	return &types.MsgCreateGameResponse{
 		GameIndex: newIndex,
