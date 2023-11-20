@@ -4,7 +4,7 @@ import (
 	"context"
 	"testing"
 
-	"github.com/b9lab/checkers/x/checkers/types"
+	"github.com/alice/checkers/x/checkers/types"
 	"github.com/stretchr/testify/require"
 )
 
