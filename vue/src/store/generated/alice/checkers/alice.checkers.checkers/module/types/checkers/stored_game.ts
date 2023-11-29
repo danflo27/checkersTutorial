@@ -1,5 +1,6 @@
 /* eslint-disable */
-import { Writer, Reader } from "protobufjs/minimal";
+import * as Long from "long";
+import { util, configure, Writer, Reader } from "protobufjs/minimal";
 
 export const protobufPackage = "alice.checkers.checkers";
 
@@ -11,7 +12,11 @@ export interface StoredGame {
   red: string;
   winner: string;
   deadline: string;
-  moveCount: string;
+  moveCount: number;
+  /** Pertains to the FIFO. Toward head. */
+  beforeIndex: string;
+  /** Pertains to the FIFO. Toward tail. */
+  afterIndex: string;
 }
 
 const baseStoredGame: object = {
@@ -22,7 +27,9 @@ const baseStoredGame: object = {
   red: "",
   winner: "",
   deadline: "",
-  moveCount: "",
+  moveCount: 0,
+  beforeIndex: "",
+  afterIndex: "",
 };
 
 export const StoredGame = {
@@ -48,8 +55,14 @@ export const StoredGame = {
     if (message.deadline !== "") {
       writer.uint32(58).string(message.deadline);
     }
-    if (message.moveCount !== "") {
-      writer.uint32(66).string(message.moveCount);
+    if (message.moveCount !== 0) {
+      writer.uint32(64).uint64(message.moveCount);
+    }
+    if (message.beforeIndex !== "") {
+      writer.uint32(74).string(message.beforeIndex);
+    }
+    if (message.afterIndex !== "") {
+      writer.uint32(82).string(message.afterIndex);
     }
     return writer;
   },
@@ -83,7 +96,13 @@ export const StoredGame = {
           message.deadline = reader.string();
           break;
         case 8:
-          message.moveCount = reader.string();
+          message.moveCount = longToNumber(reader.uint64() as Long);
+          break;
+        case 9:
+          message.beforeIndex = reader.string();
+          break;
+        case 10:
+          message.afterIndex = reader.string();
           break;
         default:
           reader.skipType(tag & 7);
@@ -131,9 +150,19 @@ export const StoredGame = {
       message.deadline = "";
     }
     if (object.moveCount !== undefined && object.moveCount !== null) {
-      message.moveCount = String(object.moveCount);
+      message.moveCount = Number(object.moveCount);
     } else {
-      message.moveCount = "";
+      message.moveCount = 0;
+    }
+    if (object.beforeIndex !== undefined && object.beforeIndex !== null) {
+      message.beforeIndex = String(object.beforeIndex);
+    } else {
+      message.beforeIndex = "";
+    }
+    if (object.afterIndex !== undefined && object.afterIndex !== null) {
+      message.afterIndex = String(object.afterIndex);
+    } else {
+      message.afterIndex = "";
     }
     return message;
   },
@@ -148,6 +177,9 @@ export const StoredGame = {
     message.winner !== undefined && (obj.winner = message.winner);
     message.deadline !== undefined && (obj.deadline = message.deadline);
     message.moveCount !== undefined && (obj.moveCount = message.moveCount);
+    message.beforeIndex !== undefined &&
+      (obj.beforeIndex = message.beforeIndex);
+    message.afterIndex !== undefined && (obj.afterIndex = message.afterIndex);
     return obj;
   },
 
@@ -191,11 +223,31 @@ export const StoredGame = {
     if (object.moveCount !== undefined && object.moveCount !== null) {
       message.moveCount = object.moveCount;
     } else {
-      message.moveCount = "";
+      message.moveCount = 0;
+    }
+    if (object.beforeIndex !== undefined && object.beforeIndex !== null) {
+      message.beforeIndex = object.beforeIndex;
+    } else {
+      message.beforeIndex = "";
+    }
+    if (object.afterIndex !== undefined && object.afterIndex !== null) {
+      message.afterIndex = object.afterIndex;
+    } else {
+      message.afterIndex = "";
     }
     return message;
   },
 };
+
+declare var self: any | undefined;
+declare var window: any | undefined;
+var globalThis: any = (() => {
+  if (typeof globalThis !== "undefined") return globalThis;
+  if (typeof self !== "undefined") return self;
+  if (typeof window !== "undefined") return window;
+  if (typeof global !== "undefined") return global;
+  throw "Unable to locate global object";
+})();
 
 type Builtin = Date | Function | Uint8Array | string | number | undefined;
 export type DeepPartial<T> = T extends Builtin
@@ -207,3 +259,15 @@ export type DeepPartial<T> = T extends Builtin
   : T extends {}
   ? { [K in keyof T]?: DeepPartial<T[K]> }
   : Partial<T>;
+
+function longToNumber(long: Long): number {
+  if (long.gt(Number.MAX_SAFE_INTEGER)) {
+    throw new globalThis.Error("Value is larger than Number.MAX_SAFE_INTEGER");
+  }
+  return long.toNumber();
+}
+
+if (util.Long !== Long) {
+  util.Long = Long as any;
+  configure();
+}
