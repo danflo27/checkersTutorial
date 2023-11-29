@@ -67,6 +67,10 @@ paths:
                       type: string
                     winner:
                       type: string
+                    deadline:
+                      type: string
+                    moveCount:
+                      type: string
               pagination:
                 type: object
                 properties:
@@ -195,6 +199,10 @@ paths:
                   red:
                     type: string
                   winner:
+                    type: string
+                  deadline:
+                    type: string
+                  moveCount:
                     type: string
         default:
           description: An unexpected error response.
@@ -29751,6 +29759,10 @@ definitions:
               type: string
             winner:
               type: string
+            deadline:
+              type: string
+            moveCount:
+              type: string
       pagination:
         type: object
         properties:
@@ -29794,6 +29806,10 @@ definitions:
             type: string
           winner:
             type: string
+          deadline:
+            type: string
+          moveCount:
+            type: string
   alice.checkers.checkers.QueryGetSystemInfoResponse:
     type: object
     properties:
@@ -29824,6 +29840,10 @@ definitions:
       red:
         type: string
       winner:
+        type: string
+      deadline:
+        type: string
+      moveCount:
         type: string
   alice.checkers.checkers.SystemInfo:
     type: object
