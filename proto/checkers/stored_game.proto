@@ -15,4 +15,5 @@ message StoredGame {
   string beforeIndex = 9; // Pertains to the FIFO. Toward head.
   string afterIndex = 10; // Pertains to the FIFO. Toward tail.
   uint64 wager = 11;
+  string denom = 12;
 }
