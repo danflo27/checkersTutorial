@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"context"
+	"fmt"
 	"strconv"
 
 	"github.com/alice/checkers/x/checkers/rules"
@@ -22,6 +23,8 @@ func (k msgServer) PlayMove(goCtx context.Context, msg *types.MsgPlayMove) (*typ
 	if storedGame.Winner != rules.PieceStrings[rules.NO_PLAYER] {
 		return nil, types.ErrGameFinished
 	}
+	fmt.Println("k", k)
+	fmt.Println("k.bank", k.bank)
 
 	//check if player is legit
 	isBlack := storedGame.Black == msg.Creator
