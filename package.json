@@ -1,0 +1,6 @@
+{
+  "devDependencies": {
+    "@keplr-wallet/types": "0.10.17",
+    "react-app-rewired": "2.2.1"
+  }
+}
