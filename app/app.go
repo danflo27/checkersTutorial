@@ -103,7 +103,10 @@ import (
 	checkersmodule "github.com/alice/checkers/x/checkers"
 	checkersmodulekeeper "github.com/alice/checkers/x/checkers/keeper"
 	checkersmoduletypes "github.com/alice/checkers/x/checkers/types"
-	// this line is used by starport scaffolding # stargate/app/moduleImport
+	leaderboardmodule "github.com/alice/checkers/x/leaderboard"
+		leaderboardmodulekeeper "github.com/alice/checkers/x/leaderboard/keeper"
+		leaderboardmoduletypes "github.com/alice/checkers/x/leaderboard/types"
+// this line is used by starport scaffolding # stargate/app/moduleImport
 )
 
 const (
@@ -158,7 +161,8 @@ var (
 		vesting.AppModuleBasic{},
 		monitoringp.AppModuleBasic{},
 		checkersmodule.AppModuleBasic{},
-		// this line is used by starport scaffolding # stargate/app/moduleBasic
+		leaderboardmodule.AppModuleBasic{},
+// this line is used by starport scaffolding # stargate/app/moduleBasic
 	)
 
 	// module account permissions
@@ -232,7 +236,9 @@ type App struct {
 	ScopedMonitoringKeeper capabilitykeeper.ScopedKeeper
 
 	CheckersKeeper checkersmodulekeeper.Keeper
-	// this line is used by starport scaffolding # stargate/app/keeperDeclaration
+	ScopedLeaderboardKeeper capabilitykeeper.ScopedKeeper
+		LeaderboardKeeper leaderboardmodulekeeper.Keeper
+// this line is used by starport scaffolding # stargate/app/keeperDeclaration
 
 	// mm is the module manager
 	mm *module.Manager
@@ -293,7 +299,8 @@ func NewApp(
 		govtypes.StoreKey, paramstypes.StoreKey, ibchost.StoreKey, upgradetypes.StoreKey, feegrant.StoreKey,
 		evidencetypes.StoreKey, ibctransfertypes.StoreKey, capabilitytypes.StoreKey, monitoringptypes.StoreKey,
 		checkersmoduletypes.StoreKey,
-		// this line is used by starport scaffolding # stargate/app/storeKey
+		leaderboardmoduletypes.StoreKey,
+// this line is used by starport scaffolding # stargate/app/storeKey
 	)
 	tkeys := sdk.NewTransientStoreKeys(paramstypes.TStoreKey)
 	memKeys := sdk.NewMemoryStoreKeys(capabilitytypes.MemStoreKey)
@@ -423,13 +430,27 @@ func NewApp(
 	)
 	checkersModule := checkersmodule.NewAppModule(appCodec, app.CheckersKeeper, app.AccountKeeper, app.BankKeeper)
 
-	// this line is used by starport scaffolding # stargate/app/keeperDefinition
+	scopedLeaderboardKeeper := app.CapabilityKeeper.ScopeToModule(leaderboardmoduletypes.ModuleName)
+app.ScopedLeaderboardKeeper = scopedLeaderboardKeeper
+		app.LeaderboardKeeper = *leaderboardmodulekeeper.NewKeeper(
+			appCodec,
+			keys[leaderboardmoduletypes.StoreKey],
+			keys[leaderboardmoduletypes.MemStoreKey],
+			app.GetSubspace(leaderboardmoduletypes.ModuleName),
+			app.IBCKeeper.ChannelKeeper,
+&app.IBCKeeper.PortKeeper,
+scopedLeaderboardKeeper,
+			)
+		leaderboardModule := leaderboardmodule.NewAppModule(appCodec, app.LeaderboardKeeper, app.AccountKeeper, app.BankKeeper)
+
+		// this line is used by starport scaffolding # stargate/app/keeperDefinition
 
 	// Create static IBC router, add transfer route, then set and seal it
 	ibcRouter := ibcporttypes.NewRouter()
 	ibcRouter.AddRoute(ibctransfertypes.ModuleName, transferIBCModule)
 	ibcRouter.AddRoute(monitoringptypes.ModuleName, monitoringModule)
-	// this line is used by starport scaffolding # ibc/app/router
+	ibcRouter.AddRoute(leaderboardmoduletypes.ModuleName, leaderboardModule)
+// this line is used by starport scaffolding # ibc/app/router
 	app.IBCKeeper.SetRouter(ibcRouter)
 
 	/****  Module Options ****/
@@ -465,7 +486,8 @@ func NewApp(
 		transferModule,
 		monitoringModule,
 		checkersModule,
-		// this line is used by starport scaffolding # stargate/app/appModule
+		leaderboardModule,
+// this line is used by starport scaffolding # stargate/app/appModule
 	)
 
 	// During begin block slashing happens after distr.BeginBlocker so that
@@ -493,7 +515,8 @@ func NewApp(
 		paramstypes.ModuleName,
 		monitoringptypes.ModuleName,
 		checkersmoduletypes.ModuleName,
-		// this line is used by starport scaffolding # stargate/app/beginBlockers
+		leaderboardmoduletypes.ModuleName,
+// this line is used by starport scaffolding # stargate/app/beginBlockers
 	)
 
 	app.mm.SetOrderEndBlockers(
@@ -517,7 +540,8 @@ func NewApp(
 		ibctransfertypes.ModuleName,
 		monitoringptypes.ModuleName,
 		checkersmoduletypes.ModuleName,
-		// this line is used by starport scaffolding # stargate/app/endBlockers
+		leaderboardmoduletypes.ModuleName,
+// this line is used by starport scaffolding # stargate/app/endBlockers
 	)
 
 	// NOTE: The genutils module must occur after staking so that pools are
@@ -546,7 +570,8 @@ func NewApp(
 		feegrant.ModuleName,
 		monitoringptypes.ModuleName,
 		checkersmoduletypes.ModuleName,
-		// this line is used by starport scaffolding # stargate/app/initGenesis
+		leaderboardmoduletypes.ModuleName,
+// this line is used by starport scaffolding # stargate/app/initGenesis
 	)
 
 	app.mm.RegisterInvariants(&app.CrisisKeeper)
@@ -571,7 +596,8 @@ func NewApp(
 		transferModule,
 		monitoringModule,
 		checkersModule,
-		// this line is used by starport scaffolding # stargate/app/appModule
+		leaderboardModule,
+// this line is used by starport scaffolding # stargate/app/appModule
 	)
 	app.sm.RegisterStoreDecoders()
 
@@ -761,7 +787,8 @@ func initParamsKeeper(appCodec codec.BinaryCodec, legacyAmino *codec.LegacyAmino
 	paramsKeeper.Subspace(ibchost.ModuleName)
 	paramsKeeper.Subspace(monitoringptypes.ModuleName)
 	paramsKeeper.Subspace(checkersmoduletypes.ModuleName)
-	// this line is used by starport scaffolding # stargate/app/paramSubspace
+	paramsKeeper.Subspace(leaderboardmoduletypes.ModuleName)
+// this line is used by starport scaffolding # stargate/app/paramSubspace
 
 	return paramsKeeper
 }
